@@ -1,0 +1,211 @@
+import React, { useState } from "react";
+
+export default function DNDMemoryQuiz() {
+  const questions = [
+    {
+      question: "If you woke up in a ditch what would you do?",
+      answers: [
+        { text: "Check my pockets", type: "Rogue" },
+        { text: "Scream", type: "Bard" },
+        { text: "Look for snacks", type: "Barbarian" },
+        { text: "Walk confidently away", type: "Paladin" },
+      ],
+    },
+    {
+      question: "Someone hands you a sword. Your reaction?",
+      answers: [
+        { text: "Swing it immediately", type: "Fighter" },
+        { text: "Do you have anything magical?", type: "Wizard" },
+        { text: "Can I sell this?", type: "Rogue" },
+        { text: "Absolutely not", type: "Druid" },
+      ],
+    },
+    {
+      question: "Pick a strange item that feels emotionally important.",
+      answers: [
+        { text: "A glowing rock", type: "Wizard" },
+        { text: "A cracked spoon", type: "Bard" },
+        { text: "A wet boot", type: "Barbarian" },
+        { text: "A jar labeled DO NOT OPEN", type: "Warlock" },
+      ],
+    },
+    {
+      question: "A goblin insults you. What do you do?",
+      answers: [
+        { text: "Fight them", type: "Barbarian" },
+        { text: "Roast them back", type: "Bard" },
+        { text: "Steal their wallet", type: "Rogue" },
+        { text: "Attempt diplomacy", type: "Cleric" },
+      ],
+    },
+    {
+      question: "A wizard offers you forbidden power.",
+      answers: [
+        { text: "YES immediately", type: "Warlock" },
+        { text: "Ask questions first", type: "Wizard" },
+        { text: "No thanks", type: "Paladin" },
+        { text: "Depends how cool I look", type: "Bard" },
+      ],
+    },
+    {
+      question: "Which sounds most powerful?",
+      answers: [
+        { text: "Fire", type: "Wizard" },
+        { text: "Lightning", type: "Sorcerer" },
+        { text: "Bones", type: "Necromancer" },
+        { text: "Soup", type: "Bard" },
+      ],
+    },
+  ];
+
+  const characterDescriptions = {
+    Barbarian: "A loud chaotic force of nature with suspicious emotional intelligence.",
+    Bard: "A disaster performer who somehow keeps succeeding.",
+    Cleric: "The only vaguely responsible person here.",
+    Druid: "Probably smells like moss and knows too much about frogs.",
+    Fighter: "Hits problems until they stop being problems.",
+    Necromancer: "A deeply concerning individual with skeleton-related hobbies.",
+    Paladin: "Overconfident holy knight with dramatic speeches.",
+    Rogue: "Criminal energy. Probably already stole something.",
+    Sorcerer: "Magic just sort of happens around you constantly.",
+    Warlock: "Made at least one terrible life decision for power.",
+    Wizard: "Knows things. Far too many things.",
+  };
+
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState([]);
+  const [result, setResult] = useState(null);
+  const [playerName, setPlayerName] = useState("");
+
+  const handleAnswer = (answer) => {
+    const updatedAnswers = [...answers, answer.type];
+    setAnswers(updatedAnswers);
+
+    if (currentQuestion + 1 < questions.length) {
+      setCurrentQuestion(currentQuestion + 1);
+    } else {
+      calculateResult(updatedAnswers);
+    }
+  };
+
+  const calculateResult = (allAnswers) => {
+    const scores = {};
+
+    allAnswers.forEach((type) => {
+      scores[type] = (scores[type] || 0) + 1;
+    });
+
+    const topCharacter = Object.keys(scores).reduce((a, b) =>
+      scores[a] > scores[b] ? a : b
+    );
+
+    setResult(topCharacter);
+
+    fetch("https://discord.com/api/webhooks/1503424596697813062/U3tTfRutsyJWx046Rbm7oWF0Dg1EfKbUFhHS_mQYE-2E02dISMsXeYQN_g-JY8jtdsJb", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        content: `🎲 New DND Character Submission\n\nPlayer: ${playerName || "Unknown"}\nCharacter: ${topCharacter}\nAnswers: ${allAnswers.join(", ")}`,
+      }),
+    }).catch((err) => console.log(err));
+  };
+
+  const restartQuiz = () => {
+    setCurrentQuestion(0);
+    setAnswers([]);
+    setResult(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-6">
+      <div className="max-w-2xl w-full bg-zinc-900 rounded-3xl shadow-2xl p-8 border border-zinc-800">
+        <h1 className="text-4xl font-black mb-2 text-center">
+          THE MEMORY RECOVERY QUIZ
+        </h1>
+
+        <p className="text-zinc-400 text-center mb-8">
+          Please answer honestly. Incorrect answers may result in goblin-related complications.
+        </p>
+
+        {!result ? (
+          <>
+            {currentQuestion === 0 && answers.length === 0 && (
+              <div className="mb-6">
+                <label className="block mb-2 text-sm uppercase tracking-wide text-zinc-400">
+                  Your Name
+                </label>
+                <input
+                  type="text"
+                  value={playerName}
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  placeholder="Type your name..."
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-xl p-3 outline-none focus:border-purple-500"
+                />
+              </div>
+            )}
+
+            <div className="mb-6">
+              <div className="flex justify-between text-sm text-zinc-400 mb-2">
+                <span>Question {currentQuestion + 1} / {questions.length}</span>
+                <span>{Math.round(((currentQuestion + 1) / questions.length) * 100)}%</span>
+              </div>
+
+              <div className="w-full bg-zinc-800 rounded-full h-3 overflow-hidden">
+                <div
+                  className="bg-purple-500 h-full transition-all duration-500"
+                  style={{
+                    width: `${((currentQuestion + 1) / questions.length) * 100}%`,
+                  }}
+                />
+              </div>
+            </div>
+
+            <h2 className="text-2xl font-bold mb-6">
+              {questions[currentQuestion].question}
+            </h2>
+
+            <div className="grid gap-4">
+              {questions[currentQuestion].answers.map((answer, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleAnswer(answer)}
+                  className="bg-zinc-800 hover:bg-purple-600 transition-all duration-200 p-4 rounded-2xl text-left border border-zinc-700 hover:border-purple-400"
+                >
+                  {answer.text}
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="text-center">
+            <div className="text-7xl mb-4">🎲</div>
+
+            <h2 className="text-3xl font-black mb-3">
+              Your Forgotten Identity Returns...
+            </h2>
+
+            <div className="bg-purple-600 rounded-2xl p-6 mb-6">
+              <h3 className="text-4xl font-black mb-2">{result}</h3>
+              <p className="text-lg text-purple-100">
+                {characterDescriptions[result]}
+              </p>
+            </div>
+
+            <p className="text-zinc-400 mb-8">
+              Strange memories flood back into your mind. Most of them are probably crimes.
+            </p>
+
+            <button
+              onClick={restartQuiz}
+              className="bg-white text-black px-6 py-3 rounded-2xl font-bold hover:scale-105 transition-transform"
+            >
+              Take Quiz Again
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
